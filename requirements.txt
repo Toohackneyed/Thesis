@@ -1,0 +1,4 @@
+streamlit_option_menu
+streamlit
+requests
+pandas
