@@ -1,40 +1,98 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-st.set_page_config(page_title = "IdentiTech", page_icon = "Assets/Logo.png", layout="wide")
-st.logo("Assets/IdentiTech.png")
+st.set_page_config(page_title="IdentiTech", page_icon="Assets/Logo.png", layout="wide")
+
 st.markdown(
     """
     <style>
+        /* Remove padding and margins everywhere */
+        body {
+            margin: 5px;
+            padding: 5px;
+        }
+        .css-1lcbmhc {
+            margin: 5px;
+            padding: 5px;
+        }
+        .css-18e3th9 {
+            margin: 5px;
+            padding: 5px;
+        }
         [data-testid="stMainBlockContainer"] {
-            padding: 28px;
-            margin: 28px;
+            padding: 0px !important;
+            margin: 0px !important;
         }
         [data-testid="stHeader"] {
-            background-color: "rgba(255, 255, 255, 0)";
+            visibility: hidden;
+        }
+        [data-testid="stFooter"] {
+            visibility: hidden;
+        }
+        .nav-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background-color: #fafafa;
+            padding: 0;
+            margin: 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .content-container {
+            margin-top: 0px;
+            padding: 0;
+        }
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            background-color: #fafafa;
+            padding: 5px 10px;  /* Adds padding to prevent images from going to the edge */
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+            margin: 0;
+        }
+        .header-text {
+            font-family: "sans serif";
+            font-size: 16px;
+            color: #333;
+            text-align: center;
+            margin: 0 auto;
+            padding: 0;
+        }
+        hr {
+            border: none;
+            height: 0px;
+            background-color: #28A745;
+            margin: 0px 0;
         }
     </style>
     """,
     unsafe_allow_html=True,
 )
-col1, col2, col3 = st.columns([1, 11, 1])
-with col1:
-    st.image("Assets/NCF.png", width=90)
-with col3:
-    st.image("Assets/ICpEP.png", width=90)
 
-selected = option_menu(menu_title = None,
-        options = ["Home", "Attendance", "Enroll User", "About App"],
-        icons = ["house", "building-add", "person-add","info-circle"],
-        default_index = 0,
-        orientation = "horizontal",
-        styles={
-            "container": {"padding": "0!important", "background-color": "#fafafa"},
-            "icon": {"color": "#007BFF", "font-size": "15px"}, 
-            "nav-link": {"font-size": "15px", "text-align": "center", "margin":"0px", "--hover-color": "#eee"},
-            "nav-link-selected": {"background-color": "#28A745"},
+selected = option_menu(
+    menu_title=None,
+    options=["Home", "Attendance", "Enroll User", "About App", "Admin"],
+    icons=["house", "building-add", "person-add", "info-circle", "person-lock"],
+    default_index=0,
+    orientation="horizontal",
+    styles={
+        "container": {"padding": "0!important", "background-color": "#fafafa"},
+        "icon": {"color": "blue", "font-size": "15px"},
+        "nav-link": {
+            "font-size": "15px",
+            "text-align": "center",
+            "margin": "0px",
+            "--hover-color": "#eee",
         },
-        )
+        "nav-link-selected": {"background-color": "#28A745", "color": "black"},
+    },
+)
+
+st.markdown('<hr>', unsafe_allow_html=True)
 
 if "page_states" not in st.session_state:
     st.session_state.page_states = {
@@ -44,7 +102,6 @@ if "page_states" not in st.session_state:
         "About App": None,
     }
 
-# Import and run the selected page
 if selected == "Home":
     import Home
     if st.session_state.page_states["Home"] is None:
@@ -69,3 +126,13 @@ elif selected == "About App":
         st.session_state.page_states["About App"] = About_App.app()
     else:
         About_App.app()
+elif selected == "Admin":
+    import Admin
+    if "Admin" not in st.session_state.page_states:
+        st.session_state.page_states["Admin"] = None  # Initialize the key with a default value
+    if st.session_state.page_states["Admin"] is None:
+        st.session_state.page_states["Admin"] = Admin.Admin()
+    else:
+        Admin.Admin()
+
+st.markdown('</div>', unsafe_allow_html=True)
