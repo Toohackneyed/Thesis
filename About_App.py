@@ -1,6 +1,8 @@
 import streamlit as st
 
-def app():
-    st.title("App Information")
-    st.write("About app")
-   
+def main():
+    st.title("About App")
+    st.write("About us")
+
+if __name__ == "__main__":
+    main()

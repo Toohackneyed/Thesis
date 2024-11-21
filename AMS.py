@@ -6,19 +6,6 @@ st.set_page_config(page_title="IdentiTech", page_icon="Assets/Logo.png", layout=
 st.markdown(
     """
     <style>
-        /* Remove padding and margins everywhere */
-        body {
-            margin: 5px;
-            padding: 5px;
-        }
-        .css-1lcbmhc {
-            margin: 5px;
-            padding: 5px;
-        }
-        .css-18e3th9 {
-            margin: 5px;
-            padding: 5px;
-        }
         [data-testid="stMainBlockContainer"] {
             padding: 0px !important;
             margin: 0px !important;
@@ -80,7 +67,7 @@ selected = option_menu(
     default_index=0,
     orientation="horizontal",
     styles={
-        "container": {"padding": "0!important", "background-color": "#fafafa"},
+        "container": {"padding": "10!important", "background-color": "#fafafa"},
         "icon": {"color": "blue", "font-size": "15px"},
         "nav-link": {
             "font-size": "15px",
@@ -91,8 +78,8 @@ selected = option_menu(
         "nav-link-selected": {"background-color": "#28A745", "color": "black"},
     },
 )
-
 st.markdown('<hr>', unsafe_allow_html=True)
+st.markdown('<div class="content-container">', unsafe_allow_html=True)
 
 if "page_states" not in st.session_state:
     st.session_state.page_states = {
