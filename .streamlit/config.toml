@@ -1,19 +1,19 @@
 [theme]
+# Primary accent color for interactive elements
+primaryColor = "#28A745"  # Green accent for key actions.
 
-# Primary Accent color for interactive elemets.
-primaryColor = "#007BFF"
+# Background color for the main content area 
+backgroundColor = "#FFFFFF"  # White for spaciousness.
 
-# Background color for the main content area.
-backgroundColor = "#FFFFFF"
-
-# Background color used for the sidebar and most interactive widgets
-secondaryBackgroundColor = "#28A745"
+# Background color used for the sidebar and most interactive widgets.
+secondaryBackgroundColor = "#F5F5F5"  # Light gray for subtle separation.
 
 # Color used for almost all text.
-textColor = "#343A40"
+textColor = "#4A4A4A"  # Dark gray for readability.
 
-# Font Style
-font = "sans serif"
+# Font style (choose from 'sans serif', 'serif', 'monospace').
+font = "sans serif"  # Clean and modern sans serif font.
 
 [client]
-toolbarMode = "minimal"
+# Toolbar mode: can be 'minimal' or 'auto'.
+toolbarMode = "minimal"  # Minimal toolbar for a cleaner look.

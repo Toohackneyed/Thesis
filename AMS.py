@@ -6,54 +6,83 @@ st.set_page_config(page_title="IdentiTech", page_icon="Assets/Logo.png", layout=
 st.markdown(
     """
     <style>
+        /* Overall Container Styles */
         [data-testid="stMainBlockContainer"] {
             padding: 0px !important;
             margin: 0px !important;
+            background-color: #FFFFFF; /* White background for cleanliness */
         }
-        [data-testid="stHeader"] {
+
+        /* Hide Header and Footer */
+        [data-testid="stHeader"], [data-testid="stFooter"] {
             visibility: hidden;
         }
-        [data-testid="stFooter"] {
-            visibility: hidden;
-        }
+
+        /* Navigation Menu */
         .nav-menu {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 1000;
-            background-color: #fafafa;
+            background-color: #F5F5F5; /* Light Gray Background for Navbar */
             padding: 0;
             margin: 0;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
+
+        /* Content Container */
         .content-container {
-            margin-top: 0px;
-            padding: 0;
+            margin-top: 60px; /* Adjust to leave space for the navbar */
+            padding: 20px;
+            background-color: #FFFFFF;
         }
+
+        /* Header Container */
         .header-container {
             display: flex;
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            background-color: #fafafa;
-            padding: 5px 10px;  /* Adds padding to prevent images from going to the edge */
+            background-color: #F5F5F5;
+            padding: 10px 15px;
             box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-            margin: 0;
         }
+
+        /* Header Text Styling */
         .header-text {
             font-family: "sans serif";
             font-size: 16px;
-            color: #333;
+            color: #4A4A4A; /* Dark Gray for Readability */
             text-align: center;
-            margin: 0 auto;
-            padding: 0;
         }
+
+        /* Horizontal Line */
         hr {
             border: none;
-            height: 0px;
-            background-color: #28A745;
-            margin: 0px 0;
+            height: 2px;
+            background-color: #28A745; /* Green Accent */
+            margin: 0;
+        }
+
+        /* Navigation Bar Highlight Styles */
+        .stContainer {
+            background-color: #FAFAFA; /* Neutral Background */
+        }
+         /* Button hover effect with blue */
+        .stButton > button:hover {
+            background-color: #007BFF !important;  /* Bright blue hover effect */
+            color: #FFFFFF !important;  /* White text on hover */
+        }
+
+        /* Link hover effect */
+        a:hover {
+            color: #007BFF !important;  /* Blue for emphasis on hover */
+        }
+
+        /* Icon color for active and inactive states */
+        .stIcon {
+            color: #007BFF !important;  /* Default blue for icons */
         }
     </style>
     """,
@@ -67,15 +96,15 @@ selected = option_menu(
     default_index=0,
     orientation="horizontal",
     styles={
-        "container": {"padding": "10!important", "background-color": "#fafafa"},
-        "icon": {"color": "blue", "font-size": "15px"},
+        "container": {"padding": "10!important", "background-color": "#F5F5F5"},  # Light Gray
+        "icon": {"color": "#3498DB", "font-size": "15px"},  # Soft Blue for Icons
         "nav-link": {
             "font-size": "15px",
             "text-align": "center",
             "margin": "0px",
-            "--hover-color": "#eee",
+            "--hover-color": "#EAEAEA",  # Soft Gray on Hover
         },
-        "nav-link-selected": {"background-color": "#28A745", "color": "black"},
+        "nav-link-selected": {"background-color": "#28A745", "color": "white"},  # Green for Selected Item
     },
 )
 st.markdown('<hr>', unsafe_allow_html=True)
