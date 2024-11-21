@@ -110,7 +110,7 @@ elif selected == "Enroll User":
 elif selected == "About App":
     import About_App
     if st.session_state.page_states["About App"] is None:
-        st.session_state.page_states["About App"] = About_App.app()
+        st.session_state.page_states["About App"] = About_App.main()
     else:
         About_App.main()
 elif selected == "Admin":
