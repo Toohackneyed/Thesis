@@ -1,25 +1,22 @@
-import requests
 import streamlit as st
-from streamlit_lottie import st_lottie
 
 def app():
 
-    def Verifying_url(url):
-        r = requests.get(url)
-        if r.status_code != 200:
-            return None
-        return r.json()
+    st.title("Attendance Monitoring Management System")
+    st.markdown("### 'Your attendance, your responsibility. We ensure accuracy.'")
 
-    Verify = Verifying_url("https://lottie.host/3245b939-86f3-40ac-8596-5e69a3168dfe/eYqq8XdWCq.json")
+    # Main Section
+    st.markdown("""
+    Welcome to our Attendance Monitoring System prototype! 
+    Our platform provides an easy-to-use solution for tracking attendance efficiently and accurately.
+    """)
 
-    # Create columns, ensure the third column (col3) is set to the far right.
-    col1, col2, col3 = st.columns([1, 5, 1])
+    # Features Section
+    st.markdown("### Key Features")
+    st.markdown("""
+    - **Real-Time Attendance Tracking**: Easily record attendance in real time.
+    - **Automated Reports**: Get detailed reports with just a click.
+    - **User-Friendly Dashboard**: Simple and intuitive interface for quick navigation.
+    """)
 
-    # with col1:
-    #     st.image("Assets/NCF.png", width=150)
-
-    with col2:
-        st_lottie(Verify, height=500, key="rfid")
-
-    # with col3:
-    #     st.image("Assets/ICpEP.png", width=150, use_container_width=True)
+st.markdown('</div>', unsafe_allow_html=True)

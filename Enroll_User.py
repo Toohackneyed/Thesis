@@ -1,120 +1,191 @@
 import streamlit as st
 import pandas as pd
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 import time
 
-# Admin credentials
 ADMIN_CREDENTIALS = {
     "admin": "securepass"
 }
 
+# Google Sheets setup using Streamlit secrets
+def authenticate_google_sheets():
+    scope = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    credentials = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["connections"]["gsheets"], scope)
+    client = gspread.authorize(credentials)
+    sheet = client.open_by_url(st.secrets["connections"]["gsheets"]["spreadsheet"]).sheet1
+    return sheet
+
+def fetch_data_from_sheets(sheet):
+    data = sheet.get_all_records()
+    return pd.DataFrame(data)
+
+def update_sheet(sheet, df):
+    sheet.clear()
+    sheet.update([df.columns.values.tolist()] + df.values.tolist())
+
+# Admin Functionality
 def Admin():
-    # Admin login management
+    # Initialize session state for admin login
     if "logged_in" not in st.session_state:
         st.session_state.logged_in = False
 
+    # Admin Login
     if not st.session_state.logged_in:
-        with st.form("Admin Access"):
+        with st.form("Admin Login"):
             st.subheader("Admin Login")
             username = st.text_input("Username")
             password = st.text_input("Password", type="password")
-            submit_btn = st.form_submit_button("Login")
+            submit_btn = st.form_submit_button("Login", help="Log in with your admin credentials")
 
+            # Authentication Check
             if submit_btn:
                 if username in ADMIN_CREDENTIALS and password == ADMIN_CREDENTIALS[username]:
                     st.session_state.logged_in = True
                     st.session_state.username = username
-                    st.success("Login Successfully!")
-
-                    message_box_placeholder = st.empty()
-
-                    message_box_placeholder.markdown(
-                        f'<div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #f9f9f9; border-radius: 10px; padding: 20px 30px; border: 1px solid #ddd; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); z-index: 9999; width: auto; text-align: center;">'
-                        f'<strong>Welcome, Admin!</strong></div>',
-                        unsafe_allow_html=True
-                    )
-                    time.sleep(3)
-                    message_box_placeholder.empty()
-
+                    st.success("Login successful!")
+                    time.sleep(1)
                 else:
                     st.error("Invalid username or password!")
+        return False 
+    return True
+def logout():
+    """Handles admin logout."""
+    st.session_state.logged_in = False
+    st.session_state.username = None
+    st.success("Logged out successfully!")
 
-    return st.session_state.logged_in  # Return login status
-
-def student_management_page():
-    # Admin is logged in, show the student management system
+def change_password():
+    """Allows the admin to change their password."""
+    st.subheader("Change Password")
+    with st.form("Change Password"):
+        current_password = st.text_input("Current Password", type="password")
+        new_password = st.text_input("New Password", type="password")
+        confirm_password = st.text_input("Confirm New Password", type="password")
+        change_btn = st.form_submit_button("Change Password")
+        
+        if change_btn:
+            username = st.session_state.get("username")
+            if username and current_password == ADMIN_CREDENTIALS.get(username):
+                if new_password == confirm_password:
+                    ADMIN_CREDENTIALS[username] = new_password
+                    st.success("Password changed successfully!")
+                else:
+                    st.error("New password and confirmation do not match!")
+            else:
+                st.error("Incorrect current password!")
+# Student Management Page
+def student_management_page(sheet):
     if "students_data" not in st.session_state:
-        st.session_state.students_data = pd.DataFrame({
-            "Student ID": [101, 102, 103],
-            "Name": ["Alice", "Bob", "Charlie"],
-            "Age": [20, 21, 22],
-            "Course": ["Engineering", "Engineering", "Engineering"]
-        })
+        st.session_state.students_data = fetch_data_from_sheets(sheet)
 
-    students_data = st.session_state.students_data  # Access data from session_state
+    students_data = st.session_state.students_data
 
-    st.title("Student Enrollment System")
+    if "toggle_change_password" not in st.session_state:
+        st.session_state.toggle_change_password = False
 
-    # Display the student data table
+    col1, col2, col3 = st.columns([1, 4, 1])
+    with col3:
+        if st.button("Logout", help="Log out of the admin account"):
+            logout()
+            return
+        change_password_btn = st.button("Change Password", help="Change your admin password")
+        if change_password_btn:
+            st.session_state.toggle_change_password = not st.session_state.toggle_change_password
+
+    if st.session_state.toggle_change_password:
+        change_password()
+        return 
+
+    st.header("Student Enrollment System")
     st.subheader("Student Information")
-    st.dataframe(students_data)
+    st.dataframe(students_data.head(5))  # Display only the first 5 rows
 
-    # Search for a student by ID
     st.subheader("Search Student by ID")
-    student_id_search = st.text_input("Enter Student ID to search")
+    student_id_search = st.text_input("Enter STUDENT ID to search")
 
     if student_id_search:
-        student_to_search = students_data[students_data["Student ID"] == int(student_id_search)]
+        student_to_search = students_data[students_data["STUDENT ID"] == int(student_id_search)]
 
         if not student_to_search.empty:
             st.write("Student Found:")
             st.write(student_to_search)
 
-            # Edit student
+            # Delete Option
+            delete_btn = st.button(f"Delete Student {student_id_search}")
+            if delete_btn:
+                st.session_state.students_data = st.session_state.students_data[students_data["STUDENT ID"] != int(student_id_search)]
+                update_sheet(sheet, st.session_state.students_data)
+                st.success(f"Student ID {student_id_search} deleted successfully!")
+                return
+
             st.subheader("Edit Student")
-            edited_name = st.text_input("Name", value=student_to_search["Name"].values[0])
-            edited_age = st.number_input("Age", min_value=18, value=student_to_search["Age"].values[0])
-            edited_course = st.text_input("Course", value=student_to_search["Course"].values[0])
+            with st.form("Edit Student"):
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    edited_rfid = st.number_input("RFID", min_value=1, value=student_to_search["RFID"].values[0])
+                with col2:
+                    edited_name = st.text_input("NAME", value=student_to_search["NAME"].values[0])
+                with col3:
+                    edited_units = st.number_input("UNITS", min_value=1, value=student_to_search["UNITS"].values[0])
 
-            if st.button("Update Student"):
-                st.session_state.students_data.loc[students_data["Student ID"] == int(student_id_search), "Name"] = edited_name
-                st.session_state.students_data.loc[students_data["Student ID"] == int(student_id_search), "Age"] = edited_age
-                st.session_state.students_data.loc[students_data["Student ID"] == int(student_id_search), "Course"] = edited_course
-                st.success(f"Student {edited_name} updated successfully!")
+                col4, col5 = st.columns(2)
+                with col4:
+                    edited_subjects = st.text_input("SUBJECTS", value=student_to_search["SUBJECTS"].values[0])
+                with col5:
+                    edited_course = st.text_input("COURSE", value=student_to_search["COURSE"].values[0])
 
-            # Delete student
-            if st.button("Delete Student"):
-                # Remove the student from the dataframe
-                st.session_state.students_data = students_data[students_data["Student ID"] != int(student_id_search)]
-                st.success(f"Student with ID {student_id_search} has been deleted!")
+                update_btn = st.form_submit_button("Update Student")
+                if update_btn:
+                    st.session_state.students_data.loc[students_data["STUDENT ID"] == int(student_id_search), "RFID"] = edited_rfid
+                    st.session_state.students_data.loc[students_data["STUDENT ID"] == int(student_id_search), "NAME"] = edited_name
+                    st.session_state.students_data.loc[students_data["STUDENT ID"] == int(student_id_search), "UNITS"] = edited_units
+                    st.session_state.students_data.loc[students_data["STUDENT ID"] == int(student_id_search), "SUBJECTS"] = edited_subjects
+                    st.session_state.students_data.loc[students_data["STUDENT ID"] == int(student_id_search), "COURSE"] = edited_course
+                    update_sheet(sheet, st.session_state.students_data)
+                    st.success(f"Student {edited_name} updated successfully!")
+
         else:
             st.warning("No student found with this ID")
 
-    # Add student
     st.subheader("Add Student")
-    student_id = st.text_input("Student ID (for new student)")
-    name = st.text_input("Name")
-    age = st.number_input("Age", min_value=18)
-    course = st.text_input("Course")
+    with st.form("Add Student"):
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            rfid = st.number_input("RFID", min_value=1)
+        with col2:
+            student_id = st.text_input("STUDENT ID (for new student)")
+        with col3:
+            name = st.text_input("NAME")
 
-    if st.button("Add Student"):
-        if student_id and name and age and course:
-            # Add student to the DataFrame
-            new_student = pd.DataFrame({"Student ID": [student_id], "Name": [name], "Age": [age], "Course": [course]})
-            st.session_state.students_data = pd.concat([students_data, new_student], ignore_index=True)
-            st.success(f"Student {name} added successfully!")
+        col4, col5 = st.columns(2)
+        with col4:
+            units = st.number_input("UNITS", min_value=1)
+        with col5:
+            subjects = st.text_input("SUBJECTS")
 
-    # Display updated table
+        course = st.text_input("COURSE")
+
+        add_btn = st.form_submit_button("Add Student")
+        if add_btn:
+            if rfid and student_id and name and units and subjects and course:
+                new_student = pd.DataFrame({"RFID": [rfid], "STUDENT ID": [student_id], "NAME": [name], "UNITS": [units], "SUBJECTS": [subjects], "COURSE": [course]})
+                st.session_state.students_data = pd.concat([students_data, new_student], ignore_index=True)
+                update_sheet(sheet, st.session_state.students_data)
+                st.success(f"Student {name} added successfully!")
+
     st.subheader("Updated Student Information")
     st.dataframe(st.session_state.students_data)
 
+# Main App
 def app():
-    # Admin login check
-    if not Admin():  # If admin is not logged in, show the login page
+    sheet = authenticate_google_sheets()
+    if not Admin():
         return
+    student_management_page(sheet)
 
-    # If logged in, show the student management page
-    student_management_page()
-
-# Run the app
 if __name__ == "__main__":
     app()
