@@ -14,16 +14,10 @@ def authenticate_google_sheets():
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive"
     ]
-    
-    # Use from_service_account_info instead of from_json_keyfile_dict
     credentials = service_account.Credentials.from_service_account_info(
         st.secrets["connections"]["gsheets"], scopes=scope
     )
-    
-    # Authorize gspread with the credentials
     client = gspread.authorize(credentials)
-    
-    # Open the spreadsheet by URL
     sheet = client.open_by_url(st.secrets["connections"]["gsheets"]["spreadsheet"]).sheet1
     
     return sheet
