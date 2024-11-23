@@ -3,6 +3,8 @@ streamlit
 requests
 pandas
 streamlit_lottie
-oauth2client.service_account
+ogoogle-auth 
+google-auth-oauthlib 
+google-auth-httplib2
 gspread
 
