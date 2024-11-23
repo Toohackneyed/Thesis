@@ -3,3 +3,6 @@ streamlit
 requests
 pandas
 streamlit_lottie
+oauth2client.service_account
+gspread
+
