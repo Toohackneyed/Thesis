@@ -4,9 +4,11 @@ st.set_page_config(page_title="IdentiTech", page_icon="Assets/Logo.png", layout=
 st.markdown(
     """
     <style>
+        }
         [data-testid="stMainBlockContainer"] {
             padding: 50px !important;
-            background-color: #FFFFFF;
+            background-color: "#28A745";
+            color: "#28A745";
         }
         [data-testid="stHeader"]{
             background-color: "#28A745";

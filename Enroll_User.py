@@ -3,24 +3,18 @@ import gspread
 from google.oauth2 import service_account
 import pandas as pd
 import time
-import json
-import os
 
-CREDENTIALS_FILE = 'admin_credentials.json'
-
-def load_credentials():
-    """Load admin credentials from the JSON file."""
-    if os.path.exists(CREDENTIALS_FILE):
-        with open(CREDENTIALS_FILE, 'r') as file:
-            return json.load(file)
-    st.error(f"Credentials file not found: {os.path.abspath(CREDENTIALS_FILE)}")  # Debugging line
-    return {}
-
-def save_credentials(credentials):
-    """Save the updated admin credentials to the JSON file."""
-    with open(CREDENTIALS_FILE, 'w') as file:
-        json.dump(credentials, file, indent=4)
-
+def add_background_color():
+    st.markdown(
+        """
+        <style>
+        .stApp {
+            background-color: #f0f8ff; /* Light blue background */
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 def authenticate_google_sheets():
     try:
         # Define the scope
@@ -42,6 +36,34 @@ def authenticate_google_sheets():
     except Exception as e:
         st.error(f"Failed to connect to Google Sheets: {e}")
         st.stop()
+def authenticate_admin_gsheet():
+    """Connect to the Admin Google Sheet."""
+    try:
+        # Load credentials from Streamlit secrets
+        scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+
+        credentials = service_account.Credentials.from_service_account_info(
+            st.secrets["connections"]["gsheets"],  # Parehong credentials
+            scopes=scope
+        )
+
+        client = gspread.authorize(credentials)
+        sheet = client.open_by_url(st.secrets["connections"]["admin_gsheets"]["spreadsheet"])
+        worksheet = sheet.worksheet(st.secrets["connections"]["admin_gsheets"]["worksheet"])
+        return worksheet
+    except Exception as e:
+        st.error(f"Failed to connect to Admin Google Sheet: {e}")
+        st.stop()
+def load_admin_credentials():
+    """Fetch admin credentials from the Google Sheet."""
+    try:
+        worksheet = authenticate_admin_gsheet()
+        data = worksheet.get_all_records()
+        return {row["Username"]: row["Password"] for row in data}
+    except Exception as e:
+        st.error(f"Error fetching admin credentials: {e}")
+        return {}
+
 # Fetch data from Google Sheets and return as DataFrame
 def fetch_data_from_sheets(sheet):
     try:
@@ -55,26 +77,18 @@ def update_sheet(sheet, df):
     sheet.clear()
     sheet.update([df.columns.values.tolist()] + df.values.tolist())
 
-def authenticate_admin():
-    """Authenticates the admin using credentials loaded from the JSON file."""
-    credentials = load_credentials()
-    return credentials
-
 def Admin():
-    # Initialize session state for admin login
     if "logged_in" not in st.session_state:
         st.session_state.logged_in = False
 
-    # Admin Login
     if not st.session_state.logged_in:
         with st.form("Admin Login"):
             st.subheader("Admin Login")
             username = st.text_input("Username")
             password = st.text_input("Password", type="password")
-            submit_btn = st.form_submit_button("Login", help="Log in with your admin credentials")
+            submit_btn = st.form_submit_button("Login")
 
-            # Authentication Check
-            credentials = load_credentials()
+            credentials = load_admin_credentials()
             if submit_btn:
                 if username in credentials and password == credentials[username]:
                     st.session_state.logged_in = True
@@ -83,7 +97,7 @@ def Admin():
                     time.sleep(1)
                 else:
                     st.error("Invalid username or password!")
-        return False 
+        return False
     return True
 
 def logout():
@@ -93,21 +107,23 @@ def logout():
     st.success("Logged out successfully!")
 
 def change_password():
-    """Allows the admin to change their password."""
     st.subheader("Change Password")
     with st.form("Change Password"):
         current_password = st.text_input("Current Password", type="password")
         new_password = st.text_input("New Password", type="password")
         confirm_password = st.text_input("Confirm New Password", type="password")
         change_btn = st.form_submit_button("Change Password")
-        
+
         if change_btn:
-            credentials = load_credentials()
+            credentials = load_admin_credentials()
             username = st.session_state.get("username")
+
             if username and current_password == credentials.get(username):
                 if new_password == confirm_password:
-                    credentials[username] = new_password
-                    save_credentials(credentials)  # Save the updated credentials
+                    # Update in Google Sheets
+                    worksheet = authenticate_admin_gsheet()
+                    cell = worksheet.find(username)
+                    worksheet.update_cell(cell.row, 2, new_password)  # Update password column
                     st.success("Password changed successfully!")
                 else:
                     st.error("New password and confirmation do not match!")
@@ -126,11 +142,12 @@ def student_management_page(sheet):
     if "toggle_change_password" not in st.session_state:
         st.session_state.toggle_change_password = False
 
-    col1, col2, col3 = st.columns([1, 4, 1])
+    col1, col2, col3, col4 = st.columns([1, 5, 1, 1])
     with col3:
         if st.button("Logout", help="Log out of the admin account"):
             logout()
             return
+    with col4:
         change_password_btn = st.button("Change Password", help="Change your admin password")
         if change_password_btn:
             st.session_state.toggle_change_password = not st.session_state.toggle_change_password
