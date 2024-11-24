@@ -1,11 +1,29 @@
 import streamlit as st
 import time
+import json
+import os
 
-ADMIN_CREDENTIALS = {
-    "admin": "securepass"
-}
+# File path to save the password data
+PASSWORDS_FILE = "passwords.json"
+
+# Function to load the admin credentials from the file
+def load_credentials():
+    if os.path.exists(PASSWORDS_FILE):
+        with open(PASSWORDS_FILE, "r") as file:
+            return json.load(file)
+    else:
+        # Default credentials if the file does not exist
+        return {"admin": "securepass"}
+
+# Function to save the admin credentials to the file
+def save_credentials(credentials):
+    with open(PASSWORDS_FILE, "w") as file:
+        json.dump(credentials, file)
 
 def Admin():
+    # Load credentials from the file
+    ADMIN_CREDENTIALS = load_credentials()
+
     if "logged_in" not in st.session_state:
         st.session_state.logged_in = False
 
@@ -49,6 +67,8 @@ def Admin():
                 if old_password == ADMIN_CREDENTIALS[username]:
                     if new_password == confirm_password:
                         ADMIN_CREDENTIALS[username] = new_password
+                        # Save updated credentials to file
+                        save_credentials(ADMIN_CREDENTIALS)
                         st.success("Password updated successfully!")
                     else:
                         st.error("New passwords do not match!")

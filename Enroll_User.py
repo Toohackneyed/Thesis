@@ -3,10 +3,23 @@ import gspread
 from google.oauth2 import service_account
 import pandas as pd
 import time
+import json
+import os
 
-ADMIN_CREDENTIALS = {
-    "admin": "securepass"
-}
+CREDENTIALS_FILE = 'admin_credentials.json'
+
+def load_credentials():
+    """Load admin credentials from the JSON file."""
+    if os.path.exists(CREDENTIALS_FILE):
+        with open(CREDENTIALS_FILE, 'r') as file:
+            return json.load(file)
+    st.error(f"Credentials file not found: {os.path.abspath(CREDENTIALS_FILE)}")  # Debugging line
+    return {}
+
+def save_credentials(credentials):
+    """Save the updated admin credentials to the JSON file."""
+    with open(CREDENTIALS_FILE, 'w') as file:
+        json.dump(credentials, file, indent=4)
 
 def authenticate_google_sheets():
     try:
@@ -42,7 +55,11 @@ def update_sheet(sheet, df):
     sheet.clear()
     sheet.update([df.columns.values.tolist()] + df.values.tolist())
 
-# Admin Functionality
+def authenticate_admin():
+    """Authenticates the admin using credentials loaded from the JSON file."""
+    credentials = load_credentials()
+    return credentials
+
 def Admin():
     # Initialize session state for admin login
     if "logged_in" not in st.session_state:
@@ -57,8 +74,9 @@ def Admin():
             submit_btn = st.form_submit_button("Login", help="Log in with your admin credentials")
 
             # Authentication Check
+            credentials = load_credentials()
             if submit_btn:
-                if username in ADMIN_CREDENTIALS and password == ADMIN_CREDENTIALS[username]:
+                if username in credentials and password == credentials[username]:
                     st.session_state.logged_in = True
                     st.session_state.username = username
                     st.success("Login successful!")
@@ -84,16 +102,20 @@ def change_password():
         change_btn = st.form_submit_button("Change Password")
         
         if change_btn:
+            credentials = load_credentials()
             username = st.session_state.get("username")
-            if username and current_password == ADMIN_CREDENTIALS.get(username):
+            if username and current_password == credentials.get(username):
                 if new_password == confirm_password:
-                    ADMIN_CREDENTIALS[username] = new_password
+                    credentials[username] = new_password
+                    save_credentials(credentials)  # Save the updated credentials
                     st.success("Password changed successfully!")
                 else:
                     st.error("New password and confirmation do not match!")
             else:
                 st.error("Incorrect current password!")
 
+def refresh_data(sheet):
+    st.session_state.students_data = fetch_data_from_sheets(sheet)
 # Student Management Page
 def student_management_page(sheet):
     if "students_data" not in st.session_state:
@@ -119,23 +141,26 @@ def student_management_page(sheet):
 
     st.header("Student Enrollment System")
     st.subheader("Student Information")
-    st.dataframe(students_data.head(5))  # Display only the first 5 rows
+
+    columns_to_display = ["RFID", "STUDENT ID", "NAME", "SUBJECTS", "UNITS"]
+    st.dataframe(students_data[columns_to_display].head(5)) # Display only the first 5 rows
 
     st.subheader("Search Student by ID")
     student_id_search = st.text_input("Enter STUDENT ID to search")
 
     if student_id_search:
-        student_to_search = students_data[students_data["STUDENT ID"] == int(student_id_search)]
-
+        # Gamitin ang `str.contains` para sa paghahanap ng bahaging tumutugma
+        student_to_search = students_data[students_data["STUDENT ID"].astype(str).str.contains(student_id_search, na=False, case=False)]
         if not student_to_search.empty:
-            st.write("Student Found:")
-            st.write(student_to_search)
+            st.write("Matching Students Found:")
+            st.write(student_to_search[columns_to_display])  # Tanging mga napiling kolum lang ang ipapakita
 
             # Delete Option
             delete_btn = st.button(f"Delete Student {student_id_search}")
             if delete_btn:
                 st.session_state.students_data = st.session_state.students_data[students_data["STUDENT ID"] != int(student_id_search)]
                 update_sheet(sheet, st.session_state.students_data)
+                refresh_data(sheet) 
                 st.success(f"Student ID {student_id_search} deleted successfully!")
                 return
 
@@ -195,7 +220,8 @@ def student_management_page(sheet):
                 st.success(f"Student {name} added successfully!")
 
     st.subheader("Updated Student Information")
-    st.dataframe(st.session_state.students_data)
+    columns_to_display = ["RFID", "STUDENT ID", "NAME", "SUBJECTS", "UNITS"]
+    st.dataframe(st.session_state.students_data[columns_to_display].head(5))
 
 # Main App
 def app():

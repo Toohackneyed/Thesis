@@ -14,10 +14,11 @@ st.markdown(
         }
         [data-testid="stFooter"]{
             visibility: hidden;} 
+            
         [data-testid="stLogo"] {
             top: -10px
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
         }
     </style>
     """,
