@@ -1,7 +1,7 @@
 import streamlit as st
-import pandas as pd
 import gspread
 from google.oauth2 import service_account
+import pandas as pd
 import time
 
 ADMIN_CREDENTIALS = {
@@ -11,18 +11,16 @@ ADMIN_CREDENTIALS = {
 def authenticate_google_sheets():
     try:
         # Define the scope
-        scope = [
-            "https://www.googleapis.com/auth/spreadsheets",
-            "https://www.googleapis.com/auth/drive"
-        ]
-        # Load credentials from `st.secrets`
+        scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+
+        # Load the credentials from Streamlit secrets
         credentials = service_account.Credentials.from_service_account_info(
-            st.secrets["connections"]["gsheets"],  # Ensure this key matches your secrets.toml
+            st.secrets["connections"]["gsheets"],  # This gets the service account info
             scopes=scope
         )
-        # Authorize the Google Sheets client
+
+        # Authorize and access the Google Sheets
         client = gspread.authorize(credentials)
-        # Open the spreadsheet
         sheet = client.open_by_url(st.secrets["connections"]["gsheets"]["spreadsheet"]).sheet1
         return sheet
     except KeyError as e:
@@ -31,7 +29,6 @@ def authenticate_google_sheets():
     except Exception as e:
         st.error(f"Failed to connect to Google Sheets: {e}")
         st.stop()
-
 # Fetch data from Google Sheets and return as DataFrame
 def fetch_data_from_sheets(sheet):
     try:
@@ -70,6 +67,7 @@ def Admin():
                     st.error("Invalid username or password!")
         return False 
     return True
+
 def logout():
     """Handles admin logout."""
     st.session_state.logged_in = False
@@ -95,6 +93,7 @@ def change_password():
                     st.error("New password and confirmation do not match!")
             else:
                 st.error("Incorrect current password!")
+
 # Student Management Page
 def student_management_page(sheet):
     if "students_data" not in st.session_state:
@@ -201,6 +200,7 @@ def student_management_page(sheet):
 # Main App
 def app():
     sheet = authenticate_google_sheets()
+
     if not Admin():
         return
     student_management_page(sheet)
