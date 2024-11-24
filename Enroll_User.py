@@ -8,23 +8,38 @@ ADMIN_CREDENTIALS = {
     "admin": "securepass"
 }
 
-# Google Sheets setup using Streamlit secrets
 def authenticate_google_sheets():
-    scope = [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive"
-    ]
-    credentials = service_account.Credentials.from_service_account_info(
-        st.secrets["connections"]["gsheets"], scopes=scope
-    )
-    client = gspread.authorize(credentials)
-    sheet = client.open_by_url(st.secrets["connections"]["gsheets"]["spreadsheet"]).sheet1
-    
-    return sheet
+    try:
+        # Define the scope
+        scope = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive"
+        ]
+        # Load credentials from `st.secrets`
+        credentials = service_account.Credentials.from_service_account_info(
+            st.secrets["connections"]["gsheets"],  # Ensure this key matches your secrets.toml
+            scopes=scope
+        )
+        # Authorize the Google Sheets client
+        client = gspread.authorize(credentials)
+        # Open the spreadsheet
+        sheet = client.open_by_url(st.secrets["connections"]["gsheets"]["spreadsheet"]).sheet1
+        return sheet
+    except KeyError as e:
+        st.error(f"Missing key in Streamlit secrets: {e}")
+        st.stop()
+    except Exception as e:
+        st.error(f"Failed to connect to Google Sheets: {e}")
+        st.stop()
 
+# Fetch data from Google Sheets and return as DataFrame
 def fetch_data_from_sheets(sheet):
-    data = sheet.get_all_records()
-    return pd.DataFrame(data)
+    try:
+        data = sheet.get_all_records()
+        return pd.DataFrame(data)
+    except Exception as e:
+        st.error(f"Failed to fetch data from Google Sheets: {e}")
+        st.stop()
 
 def update_sheet(sheet, df):
     sheet.clear()
